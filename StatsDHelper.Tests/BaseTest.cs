@@ -4,7 +4,7 @@ namespace StatsDHelper.Tests
 {
     public abstract class BaseTest
     {
-        public const string TestHost = "host";
+        public const string TestHost = "localhost";
         public const int TestPort = 8152;
         public const string TestApplicationName = "ApplicationName";
 
@@ -26,7 +26,7 @@ namespace StatsDHelper.Tests
             configuration.AppSettings.Settings.Add("StatsD.Port", TestPort.ToString());
             configuration.AppSettings.Settings.Add("StatsD.ApplicationName", TestApplicationName);
             SaveAndRefresh(configuration);
-        }      
+        }
 
         private static void SaveAndRefresh(Configuration configuration)
         {

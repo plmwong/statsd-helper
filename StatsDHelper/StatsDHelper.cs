@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using StatsdClient;
 
+
 namespace StatsDHelper
 {
     public class StatsDHelper : IStatsDHelper
@@ -24,24 +25,24 @@ namespace StatsDHelper
             get{return _statsdClient;}
         }
 
-        public void LogCount(string name, int count = 1)
+        public void LogCount(string name, int count = 1, params string[] tags)
         {
-            _statsdClient.LogCount(string.Format("{0}.{1}", GetStandardPrefix, name), count);
+            _statsdClient.Add<Statsd.Counting, int>(string.Format("{0}.{1}", GetStandardPrefix, name), count, 1.0f, tags);
         }
 
-        public void LogGauge(string name, int value)
+        public void LogGauge(string name, int value, params string[] tags)
         {
-            _statsdClient.LogGauge(string.Format("{0}.{1}", GetStandardPrefix, name), value);
+            _statsdClient.Add<Statsd.Gauge, int>(string.Format("{0}.{1}", GetStandardPrefix, name), value, 1.0f, tags);
         }
 
-        public void LogTiming(string name, long milliseconds)
+        public void LogTiming(string name, long milliseconds, params string[] tags)
         {
-            _statsdClient.LogTiming(string.Format("{0}.{1}", GetStandardPrefix, name), milliseconds);
+            _statsdClient.Add<Statsd.Timing, long>(string.Format("{0}.{1}", GetStandardPrefix, name), milliseconds, 1.0f, tags);
         }
 
-        public void LogSet(string name, int value)
+        public void LogSet(string name, int value, params string[] tags)
         {
-            _statsdClient.LogSet(string.Format("{0}.{1}", GetStandardPrefix, name), value);
+            _statsdClient.Add<Statsd.Set, int>(string.Format("{0}.{1}", GetStandardPrefix, name), value, 1.0f, tags);
         }
 
         public string GetStandardPrefix
@@ -80,7 +81,7 @@ namespace StatsDHelper
                                 return new NullStatsDHelper();
                             }
 
-                            _instance = new StatsDHelper(new PrefixProvider(new HostPropertiesProvider()), new Statsd(host, int.Parse(port)));
+                            _instance = new StatsDHelper(new PrefixProvider(new HostPropertiesProvider()), new Statsd(new StatsdUDP(host, int.Parse(port))));
                         }
                     }
                 }
