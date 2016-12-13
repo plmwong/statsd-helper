@@ -54,12 +54,12 @@
   <ItemGroup>
     <Compile Include="HostPropertiesProvider.cs" />
     <Compile Include="IHostPropertiesProvider.cs" />
-    <Compile Include="IPrefixProvider.cs" />
+    <Compile Include="IDomainNameProvider.cs" />
     <Compile Include="IStatsDHelper.cs" />
     <Compile Include="StatsDHelperExtensions.cs" />
     <Compile Include="TimerToken.cs" />
     <Compile Include="NullStatsDHelper.cs" />
-    <Compile Include="PrefixProvider.cs" />
+    <Compile Include="DomainNameProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StatsDHelper.cs" />
   </ItemGroup>

@@ -1,5 +1,7 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 using System.Diagnostics;
+using System.Linq;
 using StatsdClient;
 
 
@@ -7,16 +9,15 @@ namespace StatsDHelper
 {
     public class StatsDHelper : IStatsDHelper
     {
-        private readonly IPrefixProvider _prefixProvider;
+        private readonly IDomainNameProvider _domainNameProvider;
         private readonly IStatsd _statsdClient;
-        private string _prefix;
 
         private static readonly object Padlock = new object();
         private static IStatsDHelper _instance;
 
-        internal StatsDHelper(IPrefixProvider prefixProvider, IStatsd statsdClient)
+        internal StatsDHelper(IDomainNameProvider domainNameProvider, IStatsd statsdClient)
         {
-            _prefixProvider = prefixProvider;
+            _domainNameProvider = domainNameProvider;
             _statsdClient = statsdClient;
         }
 
@@ -27,34 +28,38 @@ namespace StatsDHelper
 
         public void LogCount(string name, int count = 1, params string[] tags)
         {
-            _statsdClient.Add<Statsd.Counting, int>(string.Format("{0}.{1}", GetStandardPrefix, name), count, 1.0f, tags);
+            _statsdClient.Add<Statsd.Counting, int>(string.Format("{0}.{1}", ApplicationName, name), count, 1.0f, EnsureTagsIncludeFullyQualifiedDomainName(tags));
         }
 
         public void LogGauge(string name, int value, params string[] tags)
         {
-            _statsdClient.Add<Statsd.Gauge, int>(string.Format("{0}.{1}", GetStandardPrefix, name), value, 1.0f, tags);
+            _statsdClient.Add<Statsd.Gauge, int>(string.Format("{0}.{1}", ApplicationName, name), value, 1.0f, EnsureTagsIncludeFullyQualifiedDomainName(tags));
         }
 
         public void LogTiming(string name, long milliseconds, params string[] tags)
         {
-            _statsdClient.Add<Statsd.Timing, long>(string.Format("{0}.{1}", GetStandardPrefix, name), milliseconds, 1.0f, tags);
+            _statsdClient.Add<Statsd.Timing, long>(string.Format("{0}.{1}", ApplicationName, name), milliseconds, 1.0f, EnsureTagsIncludeFullyQualifiedDomainName(tags));
         }
 
         public void LogSet(string name, int value, params string[] tags)
         {
-            _statsdClient.Add<Statsd.Set, int>(string.Format("{0}.{1}", GetStandardPrefix, name), value, 1.0f, tags);
+            _statsdClient.Add<Statsd.Set, int>(string.Format("{0}.{1}", ApplicationName, name), value, 1.0f, EnsureTagsIncludeFullyQualifiedDomainName(tags));
         }
 
-        public string GetStandardPrefix
+        private string[] EnsureTagsIncludeFullyQualifiedDomainName(string[] tags)
         {
-            get
+            if (!tags.Any(t => t.StartsWith("fqdn:")))
             {
-                if (string.IsNullOrEmpty(_prefix))
-                {
-                    _prefix = _prefixProvider.GetPrefix();
-                }
-                return _prefix;
+                Array.Resize(ref tags, tags.Length + 1);
+                tags[tags.Length - 1] = "fqdn:" + _domainNameProvider.GetFullyQualifiedDomainName();
             }
+
+            return tags;
+        }
+
+        private string ApplicationName
+        {
+            get { return ConfigurationManager.AppSettings["StatsD.ApplicationName"].ToLowerInvariant(); }
         }
 
         public static IStatsDHelper Instance
@@ -81,7 +86,7 @@ namespace StatsDHelper
                                 return new NullStatsDHelper();
                             }
 
-                            _instance = new StatsDHelper(new PrefixProvider(new HostPropertiesProvider()), new Statsd(new StatsdUDP(host, int.Parse(port))));
+                            _instance = new StatsDHelper(new DomainNameProvider(new HostPropertiesProvider()), new Statsd(new StatsdUDP(host, int.Parse(port))));
                         }
                     }
                 }

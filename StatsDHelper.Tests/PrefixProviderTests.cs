@@ -20,9 +20,9 @@ namespace StatsDHelper.Tests
             hostPropertiesProvider.Stub(o => o.GetHostName())
                 .Return("red-iis008");
 
-            var prefixProvider = new PrefixProvider(hostPropertiesProvider);
+            var prefixProvider = new DomainNameProvider(hostPropertiesProvider);
 
-            var result = prefixProvider.GetPrefix();
+            var result = prefixProvider.GetFullyQualifiedDomainName();
 
             result.Should().Be(string.Format("com.test.red-iis008.{0}",TestApplicationName));
         }
